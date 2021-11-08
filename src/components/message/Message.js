@@ -17,11 +17,11 @@ export default function Message({message, own, userData}) {
                             {message.text}
                         </p>
                     </Emojify>
-                    <img
+                    {/* <img
                         className="messageTopImg"
                         src={userData?.profilePicture}
                         alt=""
-                    />
+                    /> */}
                 </div>
                 <div className="messageBottom">{dateFormat(message.createdAt)}</div>
             </div>

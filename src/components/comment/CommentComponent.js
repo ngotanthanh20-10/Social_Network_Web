@@ -86,7 +86,7 @@ function CommentComponent({comment,user,upCmt,postId}) {
                         </div>
                         <div className={classes.group} onClick={() => setPlaceholder(reply.name)} >
                             <Reply sx={{ marginRight: '3px' }} />
-                            <span>Trả lời (2)</span>
+                            <span>Trả lời</span>
                         </div>
                     </div>
                     

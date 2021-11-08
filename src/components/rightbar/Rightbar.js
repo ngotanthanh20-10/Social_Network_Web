@@ -50,7 +50,7 @@ export default function Rightbar({ profile, user }) {
                     <img className="birthImg" src="/assets/gift.jpg" alt=""/>
                     <span className="birthText">
                         Hôm nay là sinh nhật của
-                        <b> Naruto</b> and <b>3 người khác</b>
+                        <b> Luffy</b> and <b>3 người khác</b>
                     </span>
                 </div>
                 <hr className="rightbarHr"/>
