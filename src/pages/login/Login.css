@@ -1,21 +1,65 @@
 .login {
     width: 100vw;
     height: 100vh;
-    background-color: #f0f2f5;
+    background-color: #ffffffcc;
     display: flex;
     align-items: center;
     justify-content: center;
-    --border-radius: 5px;
+    --border-radius: 10px;
+    --border-radius-btn: 5px;
+    --button-fsz: 18px;
 }
 
 .loginWrapper {
-    width: 70%;
-    height: 70%;
+    width: 800px;
+    height: 500px;
     display: flex;
+    background-color: white;
+    border-radius: var(--border-radius);
+    -webkit-box-shadow: 0px 5px 5px -3px rgba(0, 0, 0, 0.2),
+        0px 8px 10px 1px rgba(0, 0, 0, 0.14),
+        0px 3px 14px 2px rgba(0, 0, 0, 0.12);
+    box-shadow:  0px 5px 5px -3px rgba(0, 0, 0, 0.2),
+        0px 8px 10px 1px rgba(0, 0, 0, 0.14),
+        0px 3px 14px 2px rgba(0, 0, 0, 0.12);
+    position: relative;
 }
 
-.loginLeft, .loginRight {
+.loginWrapper::before {
+    content: "";
+    position: absolute;
+    top: -75px;
+    left: -75px;
+    width: 150px;
+    height: 150px;
+    background-color: #1775ee;
+    box-shadow:  0px 0px 5px 3px #1775ee;
+    z-index: -1;
+}
+
+.loginWrapper::after {
+    content: "";
+    position: absolute;
+    bottom: -75px;
+    right: -75px;
+    width: 150px;
+    height: 150px;
+    background-color: rgba(0, 0, 0, 0.5);
+    box-shadow:  0px 0px 5px 3px rgba(0, 0, 0, 0.5);
+    z-index: -1;
+}
+
+.loginLeft {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+}
+
+.loginRight {
+    flex: 1.25;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -26,10 +70,13 @@
     font-weight: 800;
     color: #1775ee;
     margin-bottom: 10px;
+    text-shadow: 2px 2px 3px rgba(0,0,0,0.25);
 }
 
 .loginDesc {
-    font-size: 20px;
+    font-size: 17px;
+    color: gray;
+    text-align: center;
 }
 
 .loginError {
@@ -43,13 +90,12 @@
 }
 
 .loginBox {
-    height: 300px;
+    /* height: 300px; */ 
     padding: 20px;
-    background-color: white;
-    border-radius: var(--border-radius);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    gap: 20px;
 }
 
 /* .loginForm {
@@ -63,18 +109,14 @@
 
 .loginInput {
     height: 50px;
-    border-radius: var(--border-radius);
-    border: 1px solid gray;
+    border-radius: 5px;
+    border: 2px solid gray;
     font-size: 18px;
     padding-left: 20px;
 }
 
 .loginInput:hover {
-    height: 50px;
-    border-radius: 10px;
-    border: 1px solid #1775ee;
-    font-size: 18px; 
-    padding-left: 20px;
+    border-color: #1775ee;
 }
 
 .loginInput:focus {
@@ -83,24 +125,17 @@
 
 .loginButton {
     height: 50px;
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius-btn);
     border: none;
     background-color: #1775ee;
     color: white;
-    font-size: 20px;
+    font-size: var(--button-fsz);
     font-weight: 500;
     cursor: pointer;
 }
 
 .loginButton:hover {
-    height: 50px;
-    border-radius: 10px;
-    border: none;
     background-color: #155ebf;
-    color: white;
-    font-size: 20px;
-    font-weight: 500;
-    cursor: pointer;
 }
 
 .loginForgot {
@@ -114,34 +149,25 @@
 }
 
 .loginRegisterButton {
-    width: 60%;
+    /* width: 60%; */
     align-self: center;
-    height: 50px;
-    border-radius: 10px;
+    height: 45px;
+    border-radius: var(--border-radius-btn);
     border: none;
     background-color: #42b72a;
     color: white;
-    font-size: 20px;
+    font-size: var(--button-fsz);
     font-weight: 500;
     cursor: pointer;
 }
 
 .loginRegisterButton:hover {
-    width: 60%;
-    align-self: center;
-    height: 50px;
-    border-radius: 10px;
-    border: none;
     background-color: #1da701;
-    color: white;
-    font-size: 20px;
-    font-weight: 500;
-    cursor: pointer;
 }
 
 .googleButton {
-    width: 65%;
-    border-radius: 10px;
+    /* width: 65%; */
+    border-radius: var(--border-radius-btn);
     border: none;
     padding: 7px;
     align-self: center;
@@ -152,15 +178,7 @@
 }
 
 .googleButton:hover {
-    width: 65%;
-    border-radius: 10px;
-    border: none;
-    padding: 7px;
-    align-self: center;
     background-color: #155ebf;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
 }
 
 .googleImg {
@@ -177,5 +195,6 @@
     font-weight: 500;
     color: white;
     margin: 0 auto;
-    font-size: 20px;
+    font-size: var(--button-fsz);
+    text-indent: 5px;
 }
