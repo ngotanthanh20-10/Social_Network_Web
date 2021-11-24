@@ -7,7 +7,7 @@ export const dateFormat = (timestamps) => {
     const monthsAgo = now.getMonth() - created_date.getMonth();
     const daysAgo = monthsAgo*30 + now.getDate() - created_date.getDate();
     const hoursAgo = now.getHours() - created_date.getHours();
-    const minsAgo = now.getMinutes() - created_date.getMinutes();
+    const minsAgo = hoursAgo*60 + now.getMinutes() - created_date.getMinutes();
 
 
     if(yearsAgo > 0) {
@@ -16,9 +16,9 @@ export const dateFormat = (timestamps) => {
         return `${monthsAgo} tháng trước`;
     } else if(daysAgo !== 0) {
         return `${daysAgo} ngày trước`;
-    } else if(hoursAgo > 0) {
+    } else if(hoursAgo > 0 && minsAgo >= 60) {
         return `${hoursAgo} giờ trước`;
-    } else if(minsAgo > 0) {
+    } else if(minsAgo !== 0) {
         return `${minsAgo} phút trước`;
     } else {
         return 'Vừa xong';

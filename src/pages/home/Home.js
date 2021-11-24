@@ -4,24 +4,28 @@ import Sidebar from '../../components/sidebar/Sidebar';
 import Rightbar from '../../components/rightbar/Rightbar';
 import Feed from '../../components/feed/Feed';
 import Topbar from '../../components/topbar/Topbar';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { SET_ONLINE_USER } from '../../constants/actionTypes';
 
 export default function Home({user}) {
     const { savedSocket } = useSelector((state) => state.socket);
+    const dispatch = useDispatch();
     console.log(savedSocket);
     useEffect(() => {
         if(savedSocket !== null ) {
             savedSocket.current.emit('addUser', 
                 {
                     userId: user.result._id, 
-                    userName: user.result.name
+                    userName: user.result.name,
+                    img: user.result?.profilePicture
                 }
             );
             savedSocket.current.on('getUsers', (users) => {
                 console.log(users);
+                dispatch({ type: SET_ONLINE_USER, payload: users });
             })
         }
-    }, [user.result, savedSocket]);
+    }, [user.result, savedSocket, dispatch]);
 
     return (
         <> 

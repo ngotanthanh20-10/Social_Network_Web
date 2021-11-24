@@ -176,7 +176,9 @@
     position: absolute;
     top: 58px;
     right: 20px;
-    width: 300px;
+    width: 350px;
+    max-height: 495px;
+    overflow-y: auto;
     background-color: white;
     border-radius: 10px;
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);

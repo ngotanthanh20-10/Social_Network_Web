@@ -36,9 +36,15 @@ export const getUser = (id) => API.get(`/users/${id}/one`);
 export const getRecommentFriends = (id) => API.get(`/users/${id}/recomments`);
 export const follow = (id) => API.put(`/users/${id}/follow`);
 export const unfollow = (id) => API.put(`/users/${id}/unfollow`);
+export const getFriends = (id) => API.get(`/users/${id}/friends`);
 
 export const createConversation = (receiver) => API.post('/conversations', receiver);
 export const getConversations = (id) => API.get(`/conversations/${id}`);
 
 export const getMessages = (id) => API.get(`/messages/${id}`);
 export const createMessage = (newMessage) => API.post('/messages', newMessage);
+
+export const addNotification = (newNotification) => API.post('/notifications', newNotification);
+export const getNotification = (id) => API.get(`/notifications/${id}`);
+export const getNotifications = () => API.get('/notifications');
+export const readNotification = (id) => API.put(`/notifications/${id}`);

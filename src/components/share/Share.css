@@ -275,3 +275,41 @@
     overflow-y: scroll !important;
     list-style: none !important;
 }
+
+.shareFriendList {
+    padding: 0;
+    margin-left: 10px;
+    list-style: none;
+}
+
+.shareFriend {
+    display: flex;
+    align-items: center;
+    height: 40px;
+    padding: 5px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    transition: .2s;
+    cursor: pointer;
+}
+
+.shareFriend > .MuiSvgIcon-root {
+    color: black;
+}
+
+.shareFriend:hover > .MuiSvgIcon-root {
+    color: #2e81f4;
+}
+
+.shareFriend:hover {
+    background-color: #eff2f5;
+    padding-left: 15px;
+}
+
+.shareFriendImg {
+    width: 35px;
+    height: 35px;
+    border-radius:50%;
+    object-fit: cover;
+    margin-right: 10px;
+}

@@ -1,5 +1,5 @@
 import * as api from '../api';
-import { CREATE, DELETE, END_CREATING, END_DELETING, END_LOADING, FETCH_ALL, START_CREATING, START_DELETING, START_LOADING, UPDATE_COMMENT } from '../constants/actionTypes';
+import { CREATE, DELETE, END_CREATING, END_DELETING, END_LOADING, FETCH_ALL, FETCH_POST, START_CREATING, START_DELETING, START_LOADING, UPDATE_COMMENT } from '../constants/actionTypes';
 
 export const createPost = (newPost,history) => async(dispatch) => {
     try {
@@ -20,7 +20,7 @@ export const getPosts = (id) => async (dispatch) => {
         dispatch({ type: START_LOADING });
         const { data } = await api.fetchPosts(id);
         dispatch({
-            type: FETCH_ALL,
+            type: FETCH_POST,
             payload: { data }
         });
         dispatch({ type: END_LOADING });
@@ -42,6 +42,7 @@ export const getTimeLine = () => async(dispatch) => {
         console.log(error);
     }
 }
+
 
 export const likePost = (id) => async (dispatch) => {
     try {

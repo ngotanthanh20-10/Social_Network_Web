@@ -1,23 +1,31 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Share from '../share/Share';
 import Post from '../post/Post';
 import './Feed.css';
 import { useDispatch, useSelector } from 'react-redux';
-import { getPosts, getTimeLine } from '../../actions/post';
+import { getPosts } from '../../actions/post';
 import { CircularProgress } from '@material-ui/core';
 
 export default function Feed({user}) {
     const dispatch = useDispatch();
-    const{ posts, isLoading } = useSelector((state) => state.posts);
+    const{ posts,userPosts, isLoading } = useSelector((state) => state.posts);
+    const { userData } = useSelector((state) => state.user);
+    const [displayPosts,setDisplayPosts] = useState([]);
 
     useEffect(() => {
         if(user) {
             dispatch(getPosts(user));
-        } else {
-            console.log("call in feed");
-            dispatch(getTimeLine());
         }
     }, [dispatch,user]);
+
+    useEffect(() => {
+        if(user) {
+            setDisplayPosts(userPosts);
+        } else {
+            setDisplayPosts(posts);
+        }
+        
+    }, [user,userPosts,posts]);
 
     // const reloadProfile = () => {
     //     console.log("recall reload");
@@ -38,10 +46,13 @@ export default function Feed({user}) {
     return (
         <div className="feed" style={{marginBottom: 'auto'}}>
             <div className="feedWrapper">
-                    <Share id={user} />
+                    { !user ? <Share id={user} /> :
+                        userData.result._id === user ? <Share id={user} /> : null
+                    }
+                    
                     {
                         !isLoading ? 
-                            posts.map((p) => (
+                            displayPosts.map((p) => (
                                 <div className="postWrapper" key={p._id}>
                                     <Post post={p}/>
                                 </div>

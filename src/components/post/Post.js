@@ -12,21 +12,20 @@ import { Avatar, Card, CardActions,
 import { CircularProgress, TextField } from '@mui/material';
 import { Comment } from '@mui/icons-material';
 import Emojify from 'react-emojione';
-    
-    
 import useStyles from './styles';
 import { addComment, deletePost, likePost } from '../../actions/post';
 import { deleteImage } from '../../actions/images';
 import ImagesList from '../imageList/ImagesList';
 import CommentComponent from '../comment/CommentComponent';
 import { dateFormat } from '../../actions/format';
-import { getComments, getUser } from '../../api';
-import { Link } from 'react-router-dom';
+import { getComments } from '../../api';
+import { Link, useHistory } from 'react-router-dom';
+import { addNotification } from '../../actions/notifications';
 
 export default function Post({post}) {
     const user = JSON.parse(localStorage.getItem('profile'));
     const [currentPost, setCurrentPost] = useState(post);
-    const [userPost,setUserPost] = useState({});
+    const [userPost,setUserPost] = useState(user?.result);
     
     const [liked, setLiked] = useState(post.likes.length);
     const [commented, setCommented] = useState(0);
@@ -34,28 +33,37 @@ export default function Post({post}) {
     const [comments,setComments] = useState([]);
     const [isLiked, setIsLiked] = useState(currentPost.likes.includes(user.result._id));
     const [isMoreBox,setIsMoreBox] = useState(false);
+    
     const dispatch = useDispatch();
+
     const {deleting} = useSelector(state => state.posts);
+    const { recommentFrds } = useSelector(state => state.user);
+
     const classes = useStyles();
+    const history = useHistory();
 
     const [expanded, setExpanded] = React.useState(false);
 
-    const {posts} = useSelector((state) => state.posts);
-    
+    const { posts } = useSelector((state) => state.posts);
+    const { savedSocket } = useSelector((state) => state.socket);
+
     useEffect(() => {
-        const getUserPost = async () => {
-            try {
-                const user = await getUser(post.userId);
-                setUserPost(user.data)
-            } catch (error) {
-                console.log(error);
-            }
+        
+        // const getUserPost = async () => {
+        //     try {
+        //         const user = await getUser(post.userId);
+        //         setUserPost(user.data)
+        //     } catch (error) {
+        //         console.log(error);
+        //     }
+        // }
+        // getUserPost();
+        const postUser = recommentFrds.filter(recomment => recomment._id === post.userId);
+        
+        if(postUser.length > 0) {
+            setUserPost(...postUser);
         }
-        getUserPost();
-        return () => {
-            setUserPost({});
-        }
-    }, [post.userId]);
+    }, [post.userId, recommentFrds]);
 
     useEffect(() => {
         posts.forEach(post => {
@@ -86,6 +94,22 @@ export default function Post({post}) {
         setLiked(isLiked ? liked-1 : liked+1);
         setIsLiked(!isLiked);
         dispatch(likePost(currentPost._id));
+        if(!isLiked && user.result._id !== userPost._id) {
+            const waitToken = Date.now().toString();
+            savedSocket?.current.emit('likeNotify', {
+                senderId: user.result._id,
+                receiverId: userPost._id,
+                waitToken
+            });
+            const model = {
+                sender: user.result._id,
+                receiver: userPost._id,
+                action: 'đã thích bài biết của bạn ❤️',
+                type: 'post',
+                waitToken
+            }
+            dispatch(addNotification(model));
+        }
     };
 
     const deleteHandler = async() => {
@@ -110,6 +134,26 @@ export default function Post({post}) {
 
 
     const handleComment = () => {
+        const waitToken = Date.now().toString();
+        if(user.result._id !== userPost._id) {
+            savedSocket?.current.emit('commentNotify', {
+                senderId: user.result._id,
+                receiverId: userPost._id,
+                waitToken,
+                postId: currentPost._id
+            });
+
+            const model = {
+                sender: user.result._id,
+                receiver: userPost._id,
+                action: 'đã bình luận bài viết của bạn 📝',
+                type: 'post',
+                waitToken,
+                postId: currentPost._id,
+            }
+            dispatch(addNotification(model));
+        }
+
         const commentForm = {
             postId: currentPost._id,
             img: user.result?.profilePicture,
@@ -136,6 +180,7 @@ export default function Post({post}) {
                     </Avatar>
                 }
                 title={
+                    <>{
                     post?.feeling ?
                         <Link to={`/profile/${userPost?._id}`} style={{textDecoration: 'none', color: 'black'}}>
                             <div className={classes.name}>
@@ -148,6 +193,34 @@ export default function Post({post}) {
                                 {userPost?.name}
                             </div>
                         </Link>
+                    }
+                    {post?.tag?.length > 0 && (
+                        <div>
+                            <span>cùng với {
+                                post.tag.slice(0,2).map((tag,index) => (
+                                    <strong 
+                                        style={{color: '#2e81f4', fontSize: 15 , cursor: 'pointer'}}
+                                        key={index}
+                                        onClick={() => history.push(`/profile/${tag.key}`)}
+                                    >
+                                        @{tag.label}  
+                                    </strong>))
+                            }
+                            </span>
+                            <br/>
+                            <span>{
+                                post.tag.slice(2,post.tag.length).map((tag,index) => (
+                                    <strong 
+                                        style={{color: '#2e81f4', fontSize: 15 , cursor: 'pointer' }}
+                                        key={index}
+                                        onClick={() => history.push(`/profile/${tag.key}`)}
+                                    >
+                                    @{tag.label}  
+                                    </strong>))
+                            }</span>
+                        </div>
+                    )}
+                    </>
                 }
                 subheader={dateFormat(currentPost.createdAt)}
                 action={ user.result._id === userPost?._id &&

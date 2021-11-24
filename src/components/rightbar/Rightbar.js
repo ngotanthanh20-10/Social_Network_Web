@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './Rightbar.css';
-import {Users} from '../../dummyData';
 import Online from '../online/Online';
 import PropTypes from 'prop-types';
 import { makeStyles, AppBar, Tabs, Tab, Typography, Box, ImageList, ImageListItem, Button, useTheme } from '@material-ui/core';
@@ -11,8 +10,26 @@ import { Link } from 'react-router-dom';
 import { withStyles } from '@mui/styles';
 
 export default function Rightbar({ profile, user }) {
-    const PF = process.env.REACT_APP_PUBLIC_FOLDER;
+    // const PF = process.env.REACT_APP_PUBLIC_FOLDER;
     const {authData} = useSelector((state)=>state.auth);
+    const { onlineUsers } = useSelector((state)=>state.user);
+    const { userPosts } = useSelector((state)=>state.posts);
+    
+    const [images, setImages] = useState([]);
+
+    useEffect(() => {
+        let arr = [];
+        userPosts.forEach(post => {
+            if(post.img.length > 1) {
+                post.img.forEach(img => arr.push(img.img));
+            } else {
+                post.img.forEach(img => arr.push(img));
+            }
+        });
+        setImages(arr);
+    }, [userPosts]);
+
+
 
     const birthFormat = (birthday) => {
         if(birthday) {
@@ -58,13 +75,13 @@ export default function Rightbar({ profile, user }) {
                 <hr className="rightbarHr"/>
                 <h4 className="rightbarTitle">Online Friends</h4>
                 <ul className="rightbarFriendList">
-                    {Users.map(u => (
-                        <Online key={u.id} user={u}/>
+                    {onlineUsers.filter(user => user.userId !== authData.result._id).map(u => (
+                        <Online key={u.userId} user={u}/>
                     ))}
 
-                    {Users.map(u => (
+                    {/* {Users.map(u => (
                         <Online key={u.id} user={u}/>
-                    ))}
+                    ))} */}
                 </ul>
             </>
         )
@@ -111,7 +128,6 @@ export default function Rightbar({ profile, user }) {
         },
         pictureList: {
             width: 430,
-            height: 500,
         },
         indicator: {
             backgroundColor: 'white',
@@ -172,60 +188,14 @@ export default function Rightbar({ profile, user }) {
                         index={value}
                         onChangeIndex={handleChangeIndex}
                     >
-                        {/* <TabPanel value={value} index={0} className="rightbarTabPanel">
-                            <div className="rightbarFollowings">
-                                <div className="rightbarFollowing">
-                                    <img src={`${PF}person/nene.jfif`} alt="" className="rightbarFollowingImg" />
-                                    <span className="rightbarFollowingName">Nene</span>
-                                </div>
-                                <div className="rightbarFollowing">
-                                    <img src={`${PF}person/berg.jfif`} alt="" className="rightbarFollowingImg" />
-                                    <span className="rightbarFollowingName">Mark Zuckerberg</span>
-                                </div>
-                                <div className="rightbarFollowing">
-                                    <img src={`${PF}person/bill.jfif`} alt="" className="rightbarFollowingImg" />
-                                    <span className="rightbarFollowingName">Bill Gates</span>
-                                </div>
-                                <div className="rightbarFollowing">
-                                    <img src={`${PF}person/luffy.jfif`} alt="" className="rightbarFollowingImg" />
-                                    <span className="rightbarFollowingName">Monkey D Luffy</span>
-                                </div>
-                                <div className="rightbarFollowing">
-                                    <img src={`${PF}person/naruto.jfif`} alt="" className="rightbarFollowingImg" />
-                                    <span className="rightbarFollowingName">Uzumaki Naruto</span>
-                                </div>
-                                <div className="rightbarFollowing">
-                                    <img src={`${PF}post/nene.jpg`} alt="" className="rightbarFollowingImg" />
-                                    <span className="rightbarFollowingName">Nene</span>
-                                </div>
-                            </div>
-                        </TabPanel> */}
                         <TabPanel value={value} index={0} className="rightbarTabPanel">
                             <div className={classes.picture}>
-                                <ImageList rowHeight={160} className={classes.pictureList} cols={3}>
-                                {/* {itemData.map((item) => (
-                                    <ImageListItem key={item.img} cols={item.cols || 1}>
-                                    <img src={item.img} alt={item.title} />
+                                <ImageList rowHeight={140} className={classes.pictureList} cols={3}>
+                                {images.slice(0,9).map((item,index) => (
+                                    <ImageListItem key={index} cols={1} rows={1}>
+                                    <img src={item} alt="" />
                                     </ImageListItem>
-                                ))} */}
-                                    <ImageListItem cols={ 2 || 1}>
-                                        <img src="https://image.shutterstock.com/image-photo/large-beautiful-drops-transparent-rain-260nw-668593321.jpg" alt="" />
-                                    </ImageListItem>
-                                    <ImageListItem cols={1}>
-                                        <img src="https://cdn.stocksnap.io/img-thumbs/960w/chalet-wood_7PBFL1ERJT.jpg" alt="" />
-                                    </ImageListItem>
-                                    <ImageListItem cols={1}>
-                                        <img src="https://cdn.stocksnap.io/img-thumbs/960w/bees-flower_BKHRBSRAUC.jpg" alt="" />
-                                    </ImageListItem>
-                                    <ImageListItem cols={2}>
-                                        <img src="https://cdn.stocksnap.io/img-thumbs/280h/G88ECALHBL.jpg" alt="" />
-                                    </ImageListItem>
-                                    <ImageListItem cols={ 2 || 1}>
-                                        <img src="https://cdn.stocksnap.io/img-thumbs/280h/husky-animal_UJVB2QEHNH.jpg" alt="" />
-                                    </ImageListItem>
-                                    <ImageListItem cols={1}>
-                                        <img src="https://cdn.stocksnap.io/img-thumbs/280h/RJWIE303ZE.jpg" alt="" />
-                                    </ImageListItem>
+                                ))}
                                 </ImageList>
                             </div>
                         </TabPanel>
@@ -267,13 +237,13 @@ export default function Rightbar({ profile, user }) {
                 <div className="rightbarOnlineFriendList">
                     <h4 className="rightbarTitle">Online Friends</h4>
                     <ul className="rightbarFriendList">
-                        {Users.map(u => (
+                        {onlineUsers.filter(user => user.userId !== authData.result._id).map(u => (
                             <Online key={u.id} user={u}/>
                         ))}
 
-                        {Users.map(u => (
+                        {/* {Users.map(u => (
                             <Online key={u.id} user={u}/>
-                        ))}
+                        ))} */}
                     </ul>
                 </div>
                 

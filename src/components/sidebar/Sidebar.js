@@ -11,8 +11,7 @@ import React, {useState, useCallback, useEffect} from 'react';
 import './Sidebar.css';
 import CloseFriend from '../closeFriend/CloseFriend';
 import {Link, useHistory} from 'react-router-dom';
-import { getRecommentFriends } from '../../actions/user';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import TodoList from "../todoList/TodoList";
 import Textfield from "@atlaskit/textfield";
 import ButtonAt from '@atlaskit/button';
@@ -24,16 +23,16 @@ export default function Sidebar() {
     const [open, setOpen] = useState(false);
     const [openShopping, setOpenShopping] = useState(false);
     const [openCourses, setOpenCourses] = useState(false);
-    const { authData } = useSelector((state) => state.auth);
+    // const { authData } = useSelector((state) => state.auth);
     const { recommentFrds } = useSelector((state) => state.user);
     const [recommentFriends, setRecommentFriends] = useState([]);
     const history = useHistory();
 
-    const dispatch = useDispatch();
+    // const dispatch = useDispatch();
 
-    useEffect(() => {
-        dispatch(getRecommentFriends(authData.result._id));
-    }, [authData.result._id,dispatch]);
+    // useEffect(() => {
+    //     dispatch(getRecommentFriends(authData.result._id));
+    // }, [authData.result._id,dispatch]);
 
     useEffect(() => {
         setRecommentFriends(recommentFrds);

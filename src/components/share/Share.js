@@ -1,5 +1,5 @@
 import { 
-    PermMedia, LocalOffer, Cancel, InsertEmoticon, Search, 
+    PermMedia, LocalOffer, Cancel, Search, 
 } from '@material-ui/icons';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -11,13 +11,11 @@ import {
     DialogContent, DialogTitle, Dialog, Grid, Paper, Chip, ListItemIcon,
 } from '@material-ui/core';
 import Emojify from 'react-emojione';
-import CloseFriend from '../closeFriend/CloseFriend';
-import { getRecommentFriends } from '../../api';
-import {Users} from '../../dummyData';
 import { compressFile, uploadFireBase } from '../../actions/images';
 import { ImageList, ImageListItem } from '@mui/material';
 import { END_UPLOADING, START_UPLOADING } from '../../constants/actionTypes';
-import '../sidebar/Sidebar'
+import '../sidebar/Sidebar';
+import { addNotification } from '../../actions/notifications';
 
 export default function Share({id}) {
     const user = JSON.parse(localStorage.getItem('profile'));
@@ -27,29 +25,13 @@ export default function Share({id}) {
 
     const { creating } = useSelector((state) => state.posts);
     const { isUploading } = useSelector((state) => state.upload);
+    const { friends } = useSelector((state) => state.user);
+    const { savedSocket } = useSelector((state) => state.socket);
     
     const [feel, setFeel] = useState('');
+    const [tag,setTag] = useState([]);
     const dispatch = useDispatch();
     const history = useHistory();
-
-    const { authData } = useSelector((state) => state.auth);
-    const [recommentFriends, setRecommentFriends] = useState([]);
-
-    useEffect(() => {
-        const fetchRecommentFriends = async() => {
-            console.log("eff call");
-            try {
-                const recommentList = await getRecommentFriends(authData.result._id);
-                setRecommentFriends(recommentList.data)
-            } catch (error) {
-                console.log(error);
-            }
-        }
-        fetchRecommentFriends();
-        return () => {
-            setRecommentFriends([]);
-        }
-    }, [authData.result._id]);
 
     useEffect(() => {
         if(creating) {
@@ -98,15 +80,38 @@ export default function Share({id}) {
         setFiles([]);
         desc.current.value = '';
         setFeel('');
+        setTag([]);
+        setChipData([]);
     };
+    
 
     const handleSubmit = async(e) => {
         e.preventDefault();
+
+        const waitToken = Date.now().toString();
+
+        savedSocket.current.emit('friendsTag', {
+            senderId: user.result._id,
+            receiverId: tag,
+            waitToken
+        });
+
+        tag.forEach(one => {
+            const model = {
+                sender: user.result._id,
+                receiver: one,
+                action: 'đã triệu hồi bạn trong một bài viết 👨‍💻',
+                type: 'post',
+                waitToken,
+            }
+            dispatch(addNotification(model));
+        })
 
         const newPost = {
             userId: user?._id || user?.googleId,
             desc: desc.current.value,
             feeling: feel,
+            tag: chipData,
             img: [],
             imgName: []
         };
@@ -150,16 +155,16 @@ export default function Share({id}) {
     const [openFeel, setOpenFeel] = React.useState(false);
     const [openTag, setOpenTag] = React.useState(false);
 
-    const [chipData, setChipData] = React.useState([
-        { key: 0, label: 'Mark Zuckerberg' },
-        { key: 1, label: 'Polymer' },
-        { key: 2, label: 'Polymer' },
-        { key: 3, label: 'React' },
-        { key: 4, label: 'Vue.js' },
-    ]);
+    const [chipData, setChipData] = React.useState([]);
+
+    const addChipData = (user) => {
+        setChipData([...chipData, { key: user._id, label: user.name }]);
+        setTag([...tag,user._id]);
+    }
     
     const handleDelete = (chipToDelete) => () => {
         setChipData((chips) => chips.filter((chip) => chip.key !== chipToDelete.key));
+        setTag((tags) => tags.filter((tag) => tag !== chipToDelete.key ));
     };
 
     useEffect(() => {
@@ -178,6 +183,19 @@ export default function Share({id}) {
                             {feel === '' ? feel : 
                                 <>{user.result.name} <span> đang cảm thấy <Emojify style={{width: '20px', height: '20px'}}>{feel}</Emojify></span></>
                             }
+                            {chipData.length > 0 && (
+                                <><br/> <span style={{wordWrap: 'break-word'}}>cùng với {
+                                    chipData.slice(0,2).map((chip) => (<strong style={{color: '#2e81f4'}}>@{chip.label}  </strong>))
+                                }
+                                    </span>
+                                    <br/>
+                                    <span>
+                                        {
+                                        chipData.slice(2,chipData.length).map((chip) => (<strong style={{color: '#2e81f4'}}>@{chip.label}  </strong>))
+                                        }
+                                    </span>
+                                </>
+                            )}
                         </div>
                         <input 
                             placeholder={`Bạn đang nghĩ gì vậy ${user.result.name} ?`}
@@ -334,9 +352,12 @@ export default function Share({id}) {
                                     <span className="shareTagsFriendTitle">Gợi ý</span>
                                     <Grid container spacing={2} className="shareTagContentOption">
                                         <Grid item xs={12} md={12}>
-                                            <ul className="sidebarFriendList">
-                                                {recommentFriends.map(u => (
-                                                    <CloseFriend key={u._id} user={u}/>
+                                            <ul className="shareFriendList">
+                                                {friends.map((u,index) => (
+                                                    <li className="shareFriend" key={index} onClick={() => addChipData(u)}>
+                                                        <Avatar className="shareFriendImg" src={u?.profilePicture}></Avatar>
+                                                        <span className="shareFriendName">{u.name}</span>
+                                                    </li>
                                                 ))}
                                             </ul>
                                         </Grid>
@@ -345,7 +366,7 @@ export default function Share({id}) {
                             </DialogContent>
                             <hr/>
                             <DialogActions>
-                                <Button onClick={() => setOpenTag(false)} color="primary">
+                                <Button onClick={() => { setOpenTag(false); setChipData([]); setTag([]); }} color="primary">
                                     Cancel
                                 </Button>
                                 <Button onClick={() => setOpenTag(false)} color="primary">

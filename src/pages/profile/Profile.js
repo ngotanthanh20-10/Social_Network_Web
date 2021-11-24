@@ -11,6 +11,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getUser } from '../../api';
 import { followUser, unfollowuser } from '../../actions/user';
 import {Link} from 'react-router-dom';
+import { addNotification } from '../../actions/notifications';
 
 export default function Profile() {
     const PF = process.env.REACT_APP_PUBLIC_FOLDER;
@@ -19,6 +20,7 @@ export default function Profile() {
 
     const { authData } = useSelector((state) => state.auth);
     const { userData } = useSelector((state) => state.user);
+    const { savedSocket } = useSelector((state) => state.socket);
 
     const [user, setUser] = useState({});
     const [followed, setFollowed] = useState(authData.result.followings.includes(id));
@@ -50,6 +52,16 @@ export default function Profile() {
     const handleAddFriend = () => {
         if(!followed) {
             dispatch(followUser(id));
+            const waitToken = Date.now().toString();
+            savedSocket?.current.emit('friendsNotify', { senderId: authData.result._id, receiverId: id, waitToken });
+            const model = {
+                sender: authData.result._id,
+                receiver: id,
+                action: 'đã bắt đầu theo dõi bạn 👀',
+                type: 'friend',
+                waitToken
+            }
+            dispatch(addNotification(model));
         } else {
             dispatch(unfollowuser(id));
         }
@@ -112,20 +124,17 @@ export default function Profile() {
                             <div className="profileAddFriend">
                                 {
                                     !followed ?
-                                    <Button variant="contained" onClick={handleAddFriend}>
-                                        Theo dõi &nbsp;
-                                        <PersonAddRounded fontSize="small"/>
+                                    <Button variant="contained" onClick={() => handleAddFriend} endIcon={<PersonAddRounded fontSize="small" />}>
+                                        Theo dõi
                                     </Button>
                                     :
-                                    <Button>
-                                        Đã theo dõi &nbsp;
-                                        <DoneAllRounded fontSize="small" />
+                                    <Button onClick={() => handleAddFriend} endIcon={<DoneAllRounded fontSize="small" />}>
+                                        Đã theo dõi
                                     </Button>
                                 }
                                 <Link to={`/chat?id=${id}`} style={{textDecoration: 'none'}}>
-                                    <Button variant="outlined">
-                                        Nhắn tin &nbsp;
-                                        <ChatRounded fontSize="small" />
+                                    <Button variant="outlined" endIcon={<ChatRounded fontSize="small" />}>
+                                        Nhắn tin
                                     </Button>
                                 </Link>
                             </div>

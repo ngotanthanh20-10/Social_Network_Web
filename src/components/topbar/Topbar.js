@@ -2,15 +2,17 @@ import {
     Notifications, Person, Search, ArrowDropDownCircle, ExitToApp, Message
 } from '@material-ui/icons';
 import React, { useCallback, useEffect, useState } from 'react';
-import './Topbar.css';
 import {Link, useHistory, useLocation} from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     Menu, withStyles, MenuItem, ListItemIcon, Avatar, Badge, IconButton
 } from '@material-ui/core';
 import decode from 'jwt-decode';
-import { SET_SOCKET, LOGOUT } from '../../constants/actionTypes';
+
+import './Topbar.css';
+import { SET_SOCKET, LOGOUT, ADD_WAIT_TOKEN, SET_WAIT_TOKEN } from '../../constants/actionTypes';
 import Notification from '../notification/Notification';
+import { getNotifications, readNotification } from '../../actions/notifications';
 
 export default function Topbar() {
     const [user,setUser] = useState(JSON.parse(localStorage.getItem('profile')));
@@ -20,11 +22,21 @@ export default function Topbar() {
     const [friendsNotify, setFriendsNotify] = useState([]);
     const [chatNotify, setChatNotify] = useState([]);
     const [postsNotify, setPostsNotify] = useState([]);
+    const [unreadFriendsNotify, setUnreadFriendsNotify] = useState([]);
+    const [unreadMessagesNotify, setUnreadMessagesNotify] = useState([]);
+    const [unreadMainNotify, setUnreadMainNotify] = useState([]);
+
     const { savedSocket } = useSelector((state) => state.socket);
+    const { notifications, waitTokens } = useSelector((state) => state.notifications);
+
     const dispatch = useDispatch();
     const history = useHistory();
     const location = useLocation();
 
+    console.log(waitTokens);
+    
+
+    // Logout the session
     const handleLogout = useCallback(() => {
         savedSocket?.current.disconnect();
         dispatch({ type: SET_SOCKET, payload: null });
@@ -33,6 +45,107 @@ export default function Topbar() {
         setUser(undefined);
     }, [dispatch, history,savedSocket]);
 
+    // send request to server to get all notifications
+    useEffect(() => {
+        dispatch(getNotifications());
+    }, [])
+
+    // set each of the notifications type
+    useEffect(() => {
+        if(notifications.length > 0) {
+            const msgNotify = notifications.filter(notification => notification.type === 'message');
+            const posts = notifications.filter(notification => notification.type === 'post');
+            const friends = notifications.filter(notification => notification.type === 'friend');
+            setChatNotify(msgNotify);
+            setPostsNotify(posts);
+            setFriendsNotify(friends);
+        }
+    }, [notifications]);
+
+    // Set unreadable notifications
+    useEffect(() => {
+        if(friendsNotify.length > 0) {
+            setUnreadFriendsNotify(friendsNotify.filter(friend => friend.seen === false));
+            // auto read with waitTokens
+            friendsNotify.forEach(notify => {
+                if(waitTokens.length > 0 && waitTokens.includes(notify?.waitToken)) {
+                    dispatch(readNotification(notify._id));
+                    dispatch({ type: SET_WAIT_TOKEN, payload: waitTokens.filter(token => token !== notify.waitToken) });
+                    setUnreadFriendsNotify([]);
+                }
+            })
+        }
+    }, [friendsNotify, dispatch]);
+
+    useEffect(() => {
+        if(chatNotify.length > 0) {
+            setUnreadMessagesNotify(chatNotify.filter(friend => friend.seen === false));
+            // auto read with waitTokens
+            chatNotify.forEach(notify => {
+                if(waitTokens.length > 0 && waitTokens.includes(notify?.waitToken)) {
+                    dispatch(readNotification(notify._id));
+                    dispatch({ type: SET_WAIT_TOKEN, payload: waitTokens.filter(token => token !== notify.waitToken) });
+                    setUnreadMessagesNotify([]);
+                }
+            })
+        }
+    }, [chatNotify, dispatch]);
+
+    useEffect(() => {
+        if(postsNotify.length > 0) {
+            setUnreadMainNotify(postsNotify.filter(friend => friend.seen === false));
+            // auto read with waitTokens
+            postsNotify.forEach(notify => {
+                if(waitTokens.length > 0 && waitTokens.includes(notify?.waitToken)) {
+                    dispatch(readNotification(notify._id));
+                    dispatch({ type: SET_WAIT_TOKEN, payload: waitTokens.filter(token => token !== notify.waitToken) });
+                    setUnreadMainNotify([]);
+                }
+            })
+        }
+    }, [postsNotify, dispatch]);
+
+    // read Notifications when clicking
+    const readFriendsNotify = () => {
+        if(unreadFriendsNotify.length > 0) {
+            unreadFriendsNotify.forEach(friend => {
+                if(friend._id) {
+                    dispatch(readNotification(friend._id));
+                } else {
+                    dispatch({ type: ADD_WAIT_TOKEN, payload: friend.waitToken });
+                }
+            });
+            setUnreadFriendsNotify([]);
+        }
+    }
+
+    const readMessagesNotify = () => {
+        if(unreadMessagesNotify.length > 0) {
+            unreadMessagesNotify.forEach(message => {
+                if(message._id) {
+                    dispatch(readNotification(message._id));
+                } else {
+                    dispatch({ type: ADD_WAIT_TOKEN, payload: message.waitToken });
+                }
+            });
+            setUnreadMessagesNotify([]);
+        }
+    }
+
+    const readMainNotify = () => {
+        if(unreadMainNotify.length > 0) {
+            unreadMainNotify.forEach(notify => {
+                if(notify._id) {
+                    dispatch(readNotification(notify._id));
+                } else {
+                    dispatch({ type: ADD_WAIT_TOKEN, payload: notify.waitToken });
+                }
+            });
+            setUnreadMainNotify([]);
+        }
+    }
+
+    // Logout when the token timeout
     useEffect(() => {
         const token = user?.token;
 
@@ -48,13 +161,42 @@ export default function Topbar() {
 
     }, [location,user?.token,handleLogout]);
 
+    // Get notifications of socket server
     useEffect(() => {
         savedSocket?.current.on('getMessageNotify', (data) => {
+            setUnreadMessagesNotify((prev) => [data, ...prev]);
             setChatNotify((prev) => [data, ...prev]);
             console.log('new message');
-        })
-    }, [savedSocket])
+        });
 
+        savedSocket?.current.on('getFriendsTag', (data) => {
+            setUnreadMainNotify((prev) => [data, ...prev]);
+            setPostsNotify((prev) => [data, ...prev]);
+            console.log('new friends tag');
+        });
+
+        savedSocket?.current.on('getFriendsNotify', (data) => {
+            setUnreadFriendsNotify((prev) => [data, ...prev]);
+            setFriendsNotify((prev) => [data, ...prev]);
+            console.log('new friends notify');
+        });
+
+        savedSocket?.current.on('getLikeNotify', (data) => {
+            setUnreadMainNotify((prev) => [data, ...prev]);
+            setPostsNotify((prev) => [data, ...prev]);
+            console.log('new like notify');
+        });
+
+        savedSocket?.current.on('getCommentNotify', (data) => {
+            setUnreadMainNotify((prev) => [data, ...prev]);
+            setPostsNotify((prev) => [data, ...prev]);
+            console.log('new comment notify');
+        });
+
+    }, [savedSocket, user.result._id])
+
+
+    // dropdown list
     const [anchorEl, setAnchorEl] = React.useState(null);
 
     const StyledMenu = withStyles({
@@ -77,6 +219,7 @@ export default function Topbar() {
         />
     ));
 
+    // Switch mode for notifications
     const switchMode = (mode) => {
         // 1: Friends
         // 2: Messages
@@ -102,6 +245,7 @@ export default function Topbar() {
                 break;
         }
     }
+    // jsx dom
     return (
         <div className="topbarContainer">
             <div className="topbarLeft">
@@ -126,8 +270,8 @@ export default function Topbar() {
 
                 <div className="topbarIcons">
                     {/* Friends Notifications */}
-                    <IconButton className="topbarIconButtons" onClick={() => switchMode(1)}>
-                        <Badge badgeContent={friendsNotify.length} color="error" className="topbarIconItem">
+                    <IconButton className="topbarIconButtons" onClick={() => {switchMode(1); readFriendsNotify()}}>
+                        <Badge badgeContent={unreadFriendsNotify?.length} color="error" className="topbarIconItem">
                             <Person fontSize="large"/>
                         </Badge>
                     </IconButton>
@@ -144,8 +288,8 @@ export default function Topbar() {
                     }
 
                     {/* Chat Notifications */}
-                    <IconButton onClick={() => switchMode(2)}>
-                        <Badge badgeContent={chatNotify.length} color="error" className="topbarIconItem">
+                    <IconButton onClick={() => {switchMode(2); readMessagesNotify()}} >
+                        <Badge badgeContent={unreadMessagesNotify?.length} color="error" className="topbarIconItem">
                             <Message fontSize="large"/>
                         </Badge>
                     </IconButton>
@@ -163,8 +307,8 @@ export default function Topbar() {
                     }
 
                     {/* Posts Notifications */}
-                    <IconButton onClick={() => switchMode(3)}>
-                        <Badge badgeContent={postsNotify.length} color="error" className="topbarIconItem">
+                    <IconButton onClick={() => {switchMode(3); readMainNotify()}}>
+                        <Badge badgeContent={unreadMainNotify?.length} color="error" className="topbarIconItem">
                             <Notifications fontSize="large"/>
                         </Badge>
                     </IconButton>

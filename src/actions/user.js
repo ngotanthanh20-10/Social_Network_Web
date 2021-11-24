@@ -1,5 +1,5 @@
 import * as api from '../api';
-import { AUTH, END_UPDATING, FOLLOW, START_UPDATING, UNFOLLOW, SET_RECOMMENT_FRIENDS } from '../constants/actionTypes';
+import { AUTH, END_UPDATING, FOLLOW, START_UPDATING, UNFOLLOW, SET_RECOMMENT_FRIENDS, SET_FRIENDS } from '../constants/actionTypes';
 
 export const updateUser = (id,formData) => async(dispatch) => {
     try {
@@ -34,6 +34,15 @@ export const getRecommentFriends = (id) => async(dispatch) => {
     try {
         const res = await api.getRecommentFriends(id);
         dispatch({ type: SET_RECOMMENT_FRIENDS , payload: res.data });
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export const getFriends = (id) => async(dispatch) => {
+    try {
+        const res = await api.getFriends(id);
+        dispatch({ type: SET_FRIENDS , payload: res.data });
     } catch (error) {
         console.log(error);
     }
